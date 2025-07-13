@@ -1,62 +1,95 @@
-import fs from "fs";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
+import Tour from "../models/tourModel.mjs";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const createTour = async (req, res) => {
+  try {
+    const newTour = await Tour.create(req.body);
 
-const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`, "utf-8")
-);
-
-export const checkID = (req, res, next, val) => {
-  if (+req.params.id > tours.length) {
-    return res.status(404).json({
-      status: "fail",
-      message: "invalid ID",
+    res.status(201).json({
+      status: "Operation Successful",
+      data: {
+        tour: newTour,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "Operation failure",
+      message: error,
     });
   }
-  next();
 };
-export const checkBody = (req, res, next, val) => {
-  if (!req.body.name || req.body.price) {
-    return res.status(404).json({
-      status: "fail",
-      message: "missing name and price",
+
+const getAllTours = async (req, res) => {
+  try {
+    const tours = await Tour.find();
+
+    res.status(201).json({
+      status: "Operation Successful",
+      result: tours.length,
+      data: {
+        tours,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "Operation failure",
+      message: error,
     });
   }
-  next();
 };
 
-const getAllTours = (req, res) => {
-  res.status(200).json({ results: tours.length, data: { tours } });
+const getATour = async (req, res) => {
+  try {
+    const tour = await Tour.findById(req.params.id);
+
+    res.status(201).json({
+      status: "Operation Successful",
+      data: {
+        tour,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "Operation failure",
+      message: error,
+    });
+  }
 };
 
-const createTour = (req, res) => {
-  const newId = tours[tours.length - 1].id + 1;
-  const newTour = Object.assign({ id: newId }, req.body);
-  tours.push(newTour);
-  fs.writeFile(
-    `${__dirname}/dev-data/data/tours-simple.json`,
-    JSON.stringify(tours),
-    err => {
-      res.status(201).json({ status: "success", data: { tour: newTour } });
-    }
-  );
+const updateTour = async (req, res) => {
+  try {
+    const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    res.status(201).json({
+      status: "Operation Successful",
+      data: {
+        tour,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "Operation failure",
+      message: error,
+    });
+  }
 };
 
-const getATour = (req, res) => {
-  const tourId = +req.params.id;
-  const tour = tours.find(tour => tour.id === tourId);
-  res.status(200).json({ results: tours.length, data: { tour } });
-};
+const deleteTour = async (req, res) => {
+  try {
+    await Tour.findByIdAndDelete(req.params.id);
 
-const updateTour = (req, res) => {
-  res.status(201).json({ message: "DONE" });
-};
-
-const deleteTour = (req, res) => {
-  res.status(204).json({ message: "DONE" });
+    res.status(201).json({
+      status: "Operation Successful",
+      data: [],
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "Operation failure",
+      message: error,
+    });
+  }
 };
 
 export { getAllTours, getATour, createTour, updateTour, deleteTour };
